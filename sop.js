@@ -148,7 +148,7 @@ function addLoadingMessage() {
     
     const avatarDiv = document.createElement('div');
     avatarDiv.className = 'message-avatar';
-    avatarDiv.textContent = '🤖';
+    avatarDiv.innerHTML = '🕷️';
     
     const contentDiv = document.createElement('div');
     contentDiv.className = 'message-content';
