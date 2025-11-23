@@ -45,13 +45,13 @@ CORS(app,
 # Zero-Trust: Rate limiting (simple in-memory store)
 # CIS Benchmark: Implement rate limiting to prevent abuse
 rate_limit_store = {}
-RATE_LIMIT_REQUESTS = 10  # Max requests
-RATE_LIMIT_WINDOW = 60  # Per 60 seconds
+RATE_LIMIT_REQUESTS = 20  # Max requests per device
+RATE_LIMIT_WINDOW = 3600  # Per hour (3600 seconds = 1 hour)
 
 # Zero-Trust: Input validation patterns
 # CIS Benchmark: Validate and sanitize all inputs
 MAX_QUESTION_LENGTH = 2000
-MIN_QUESTION_LENGTH = 3
+MIN_QUESTION_LENGTH = 1
 QUESTION_PATTERN = re.compile(r'^[a-zA-Z0-9\s\?\.\,\!\-\:\;\(\)\[\]\{\}\'\"\/\@\#\$\%\^\&\*\+\=\_\|\\\~\`\<\>]+$')
 
 # Configuration from environment (Zero-Trust: Secrets from Secret Manager)
@@ -126,7 +126,7 @@ Guidelines:
 - Focus on relevant experience and skills from the resume
 - Only use information that is explicitly stated in the resume
 - If information isn't available in the resume, say so clearly
-- Structure answers clearly with specific examples from the resume
+- Structure answers clearly and with not more than 100 words per answer
 - Compare candidate qualifications to job requirements when relevant, using only resume information
 
 CANDIDATE'S RESUME:
@@ -191,9 +191,11 @@ def rate_limit(f):
         
         # Check rate limit
         if len(rate_limit_store.get(client_ip, [])) >= RATE_LIMIT_REQUESTS:
-            logger.warning(f"Rate limit exceeded for IP: {client_ip}")
+            remaining_time = int(RATE_LIMIT_WINDOW - (current_time - rate_limit_store[client_ip][0]))
+            minutes_remaining = remaining_time // 60
+            logger.warning(f"Rate limit exceeded for IP: {client_ip} ({len(rate_limit_store[client_ip])} requests)")
             return jsonify({
-                'error': 'Rate limit exceeded. Please try again later.'
+                'error': f'Rate limit exceeded. You have reached the maximum of {RATE_LIMIT_REQUESTS} requests per hour. Please try again in {minutes_remaining} minutes.'
             }), 429
         
         # Record request
