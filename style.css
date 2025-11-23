@@ -160,6 +160,14 @@ body {
 .assistant-message .message-avatar {
     background: #5436da;
     color: white;
+    font-size: 18px;
+    padding: 4px;
+}
+
+.assistant-message .message-avatar svg {
+    width: 24px;
+    height: 24px;
+    display: block;
 }
 
 /* Message Content */

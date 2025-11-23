@@ -96,11 +96,12 @@ function addMessage(text, type, isError = false) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${type}-message`;
     
-    const avatar = type === 'user' ? '👤' : '🕷️';
+    const avatar = type === 'user' ? '👤' : '';
     const avatarDiv = document.createElement('div');
     avatarDiv.className = 'message-avatar';
     if (type === 'assistant') {
-        avatarDiv.innerHTML = '🕷️';
+        // Custom SVG: Girl with glasses
+        avatarDiv.innerHTML = '<svg width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="14" r="10" fill="#FFDBAC" stroke="#D4A574" stroke-width="1"/><rect x="6" y="10" width="8" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="18" y="10" width="8" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="14" y1="13" x2="18" y2="13" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="13" r="2" fill="currentColor"/><circle cx="22" cy="13" r="2" fill="currentColor"/><path d="M 6 8 Q 8 4, 12 6 Q 16 4, 20 6 Q 24 4, 26 8 Q 24 10, 22 9 Q 20 11, 18 10 Q 16 12, 14 10 Q 12 11, 10 9 Q 8 10, 6 8" fill="currentColor"/><path d="M 10 18 Q 16 22, 22 18" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>';
     } else {
         avatarDiv.textContent = avatar;
     }
@@ -171,7 +172,7 @@ function addLoadingMessage() {
     
     const avatarDiv = document.createElement('div');
     avatarDiv.className = 'message-avatar';
-    avatarDiv.innerHTML = '🕷️';
+    avatarDiv.innerHTML = '<svg width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="14" r="10" fill="#FFDBAC" stroke="#D4A574" stroke-width="1"/><rect x="6" y="10" width="8" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="18" y="10" width="8" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="14" y1="13" x2="18" y2="13" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="13" r="2" fill="currentColor"/><circle cx="22" cy="13" r="2" fill="currentColor"/><path d="M 6 8 Q 8 4, 12 6 Q 16 4, 20 6 Q 24 4, 26 8 Q 24 10, 22 9 Q 20 11, 18 10 Q 16 12, 14 10 Q 12 11, 10 9 Q 8 10, 6 8" fill="currentColor"/><path d="M 10 18 Q 16 22, 22 18" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>';
     
     const contentDiv = document.createElement('div');
     contentDiv.className = 'message-content';
