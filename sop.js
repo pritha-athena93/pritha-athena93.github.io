@@ -1,29 +1,37 @@
 /**
- * SOP (Standard Operating Procedure) Script for AI Agent
- * 
- * This script handles the interaction between the frontend and the AI agent backend.
- * It sends questions to the Cloud Run API and displays responses.
+ * Claude-like Chat Interface
+ * Handles chat messages and interactions with the AI backend
  */
 
 // Configuration - Cloud Run service URL
 const API_ENDPOINT = 'https://career-agent-api-tvpksobx5a-uc.a.run.app';
 
+// Chat state
+let isProcessing = false;
+
 /**
- * Main function to handle question submission
+ * Send a message to the AI
  */
-async function askQuestion() {
-    const questionInput = document.getElementById('questionInput');
-    const question = questionInput.value.trim();
+async function sendMessage() {
+    const input = document.getElementById('messageInput');
+    const message = input.value.trim();
     
-    if (!question) {
-        alert('Please enter a question.');
+    if (!message || isProcessing) {
         return;
     }
 
-    // Show loading, hide previous answers/errors
-    showLoading();
-    hideAnswer();
-    hideError();
+    // Clear input
+    input.value = '';
+    adjustTextareaHeight(input);
+
+    // Add user message to chat
+    addMessage(message, 'user');
+
+    // Show loading indicator
+    const loadingId = addLoadingMessage();
+
+    // Disable input
+    setInputDisabled(true);
 
     try {
         const response = await fetch(API_ENDPOINT, {
@@ -32,7 +40,7 @@ async function askQuestion() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                question: question
+                question: message
             })
         });
 
@@ -41,82 +49,184 @@ async function askQuestion() {
         }
 
         const data = await response.json();
-        displayAnswer(data.answer || data.response || 'No answer received.');
+        const answer = data.answer || data.response || 'No answer received.';
+        
+        // Remove loading and add AI response
+        removeLoadingMessage(loadingId);
+        addMessage(answer, 'assistant');
         
     } catch (error) {
-        console.error('Error asking question:', error);
-        showError(`Failed to get answer: ${error.message}. Please check that the API endpoint is configured correctly.`);
+        console.error('Error sending message:', error);
+        removeLoadingMessage(loadingId);
+        addMessage(`Sorry, I encountered an error: ${error.message}. Please try again.`, 'assistant', true);
     } finally {
-        hideLoading();
+        setInputDisabled(false);
+        input.focus();
     }
 }
 
 /**
- * Display the answer from the AI agent
+ * Add a message to the chat
  */
-function displayAnswer(answer) {
-    const answerSection = document.getElementById('answerSection');
-    const answerContent = document.getElementById('answerContent');
+function addMessage(text, type, isError = false) {
+    const messagesContainer = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${type}-message`;
     
-    answerContent.textContent = answer;
-    answerSection.style.display = 'block';
+    const avatar = type === 'user' ? '👤' : '🤖';
+    const avatarDiv = document.createElement('div');
+    avatarDiv.className = 'message-avatar';
+    avatarDiv.textContent = avatar;
     
-    // Scroll to answer
-    answerSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-/**
- * Show loading indicator
- */
-function showLoading() {
-    document.getElementById('loadingIndicator').style.display = 'block';
-    document.getElementById('askButton').disabled = true;
-}
-
-/**
- * Hide loading indicator
- */
-function hideLoading() {
-    document.getElementById('loadingIndicator').style.display = 'none';
-    document.getElementById('askButton').disabled = false;
-}
-
-/**
- * Show error message
- */
-function showError(message) {
-    const errorSection = document.getElementById('errorSection');
-    const errorMessage = document.getElementById('errorMessage');
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
     
-    errorMessage.textContent = message;
-    errorSection.style.display = 'block';
+    const textDiv = document.createElement('div');
+    textDiv.className = isError ? 'message-text error-message' : 'message-text';
+    
+    // Format text (basic markdown-like formatting)
+    textDiv.innerHTML = formatMessage(text);
+    
+    contentDiv.appendChild(textDiv);
+    messageDiv.appendChild(avatarDiv);
+    messageDiv.appendChild(contentDiv);
+    
+    messagesContainer.appendChild(messageDiv);
+    
+    // Scroll to bottom
+    scrollToBottom();
 }
 
 /**
- * Hide error message
+ * Format message text (basic markdown support)
  */
-function hideError() {
-    document.getElementById('errorSection').style.display = 'none';
+function formatMessage(text) {
+    // Escape HTML first
+    let formatted = escapeHtml(text);
+    
+    // Convert **bold** to <strong>
+    formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    
+    // Convert *italic* to <em>
+    formatted = formatted.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    
+    // Convert line breaks to <br>
+    formatted = formatted.replace(/\n/g, '<br>');
+    
+    // Convert bullet points
+    formatted = formatted.replace(/^[\*\-]\s+(.+)$/gm, '<li>$1</li>');
+    formatted = formatted.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+    
+    // Wrap in paragraphs
+    const paragraphs = formatted.split('<br><br>');
+    formatted = paragraphs.map(p => p.trim() ? `<p>${p}</p>` : '').join('');
+    
+    return formatted;
 }
 
 /**
- * Hide answer section
+ * Escape HTML to prevent XSS
  */
-function hideAnswer() {
-    document.getElementById('answerSection').style.display = 'none';
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 /**
- * Allow Enter key to submit (Shift+Enter for new line)
+ * Add loading indicator
+ */
+function addLoadingMessage() {
+    const messagesContainer = document.getElementById('chatMessages');
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'message assistant-message loading-message';
+    loadingDiv.id = 'loading-message';
+    
+    const avatarDiv = document.createElement('div');
+    avatarDiv.className = 'message-avatar';
+    avatarDiv.textContent = '🤖';
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    
+    const dotsDiv = document.createElement('div');
+    dotsDiv.className = 'loading-dots';
+    for (let i = 0; i < 3; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'loading-dot';
+        dotsDiv.appendChild(dot);
+    }
+    
+    contentDiv.appendChild(dotsDiv);
+    loadingDiv.appendChild(avatarDiv);
+    loadingDiv.appendChild(contentDiv);
+    messagesContainer.appendChild(loadingDiv);
+    
+    scrollToBottom();
+    return 'loading-message';
+}
+
+/**
+ * Remove loading indicator
+ */
+function removeLoadingMessage(loadingId) {
+    const loadingDiv = document.getElementById(loadingId);
+    if (loadingDiv) {
+        loadingDiv.remove();
+    }
+}
+
+/**
+ * Scroll chat to bottom
+ */
+function scrollToBottom() {
+    const messagesContainer = document.getElementById('chatMessages');
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+/**
+ * Adjust textarea height based on content
+ */
+function adjustTextareaHeight(textarea) {
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+}
+
+/**
+ * Set input disabled state
+ */
+function setInputDisabled(disabled) {
+    isProcessing = disabled;
+    const input = document.getElementById('messageInput');
+    const button = document.getElementById('sendButton');
+    
+    input.disabled = disabled;
+    button.disabled = disabled;
+}
+
+/**
+ * Initialize chat interface
  */
 document.addEventListener('DOMContentLoaded', function() {
-    const questionInput = document.getElementById('questionInput');
+    const input = document.getElementById('messageInput');
+    const button = document.getElementById('sendButton');
     
-    questionInput.addEventListener('keydown', function(e) {
+    // Auto-resize textarea
+    input.addEventListener('input', function() {
+        adjustTextareaHeight(this);
+    });
+    
+    // Send on Enter (Shift+Enter for new line)
+    input.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            askQuestion();
+            sendMessage();
         }
     });
+    
+    // Focus input on load
+    input.focus();
+    
+    // Click handler for send button
+    button.addEventListener('click', sendMessage);
 });
-
