@@ -312,10 +312,13 @@ def ask_question():
         # Generate response using Gemini
         try:
             # Zero-Trust: Timeout protection
+            # Adjust max tokens based on whether user wants elaboration
+            max_tokens = 4000 if wants_elaboration else 1500  # More tokens for elaborate responses
+            
             response = model.generate_content(
                 prompt,
                 generation_config={
-                    'max_output_tokens': 2000,  # Limit output size
+                    'max_output_tokens': max_tokens,
                     'temperature': 0.7,
                 }
             )
