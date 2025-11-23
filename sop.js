@@ -70,6 +70,29 @@ async function sendMessage() {
  */
 function addMessage(text, type, isError = false) {
     const messagesContainer = document.getElementById('chatMessages');
+    const chatContainer = document.querySelector('.chat-container');
+    
+    // Transition from initial state to chat mode on first message
+    if (chatContainer.classList.contains('initial-state')) {
+        chatContainer.classList.remove('initial-state');
+        // Update header styling
+        const header = document.querySelector('.chat-header');
+        header.style.borderBottom = '1px solid #e5e5e6';
+        header.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)';
+        header.style.position = 'sticky';
+        header.style.top = '0';
+        // Update input container
+        const inputContainer = document.querySelector('.chat-input-container');
+        inputContainer.style.borderTop = '1px solid #e5e5e6';
+        inputContainer.style.boxShadow = '0 -1px 2px rgba(0, 0, 0, 0.05)';
+        inputContainer.style.maxWidth = '100%';
+        inputContainer.style.padding = '16px 24px';
+        // Update messages container
+        messagesContainer.style.flex = '1';
+        messagesContainer.style.padding = '24px';
+        messagesContainer.style.overflowY = 'auto';
+    }
+    
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${type}-message`;
     
@@ -214,6 +237,10 @@ function setInputDisabled(disabled) {
 document.addEventListener('DOMContentLoaded', function() {
     const input = document.getElementById('messageInput');
     const button = document.getElementById('sendButton');
+    const chatContainer = document.querySelector('.chat-container');
+    
+    // Start in initial centered state
+    chatContainer.classList.add('initial-state');
     
     // Auto-resize textarea
     input.addEventListener('input', function() {
