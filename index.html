@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Career Profile - Pritha Guha</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Career Profile</h1>
+            <p class="subtitle">AI-Powered Recruiting Assistant</p>
+        </header>
+
+        <section class="intro">
+            <p>
+                Welcome! This page provides access to my career documents and an AI assistant 
+                that can answer questions about my background, skills, and experience. 
+                Feel free to explore the documents below or ask any questions.
+            </p>
+        </section>
+
+        <section class="documents">
+            <h2>Documents</h2>
+            <div class="doc-grid">
+                <a href="autobiography.pdf" class="doc-card" target="_blank">
+                    <div class="doc-icon">📄</div>
+                    <h3>Autobiography</h3>
+                    <p>Comprehensive career history and background</p>
+                </a>
+                <a href="resume.pdf" class="doc-card" target="_blank">
+                    <div class="doc-icon">📋</div>
+                    <h3>Resume</h3>
+                    <p>Professional resume and qualifications</p>
+                </a>
+                <a href="cover_letter.pdf" class="doc-card" target="_blank">
+                    <div class="doc-icon">✉️</div>
+                    <h3>Cover Letter</h3>
+                    <p>Cover letter template and examples</p>
+                </a>
+            </div>
+        </section>
+
+        <section class="qa-section">
+            <h2>Ask a Question</h2>
+            <p class="qa-intro">
+                Ask any question about my background, skills, projects, or experience. 
+                The AI assistant will provide detailed answers based on my career documents.
+            </p>
+            
+            <div class="input-group">
+                <textarea 
+                    id="questionInput" 
+                    placeholder="e.g., Does this candidate have Kubernetes experience? What projects showcase leadership? Why should we interview them?"
+                    rows="4"
+                ></textarea>
+                <button id="askButton" onclick="askQuestion()">Ask Question</button>
+            </div>
+
+            <div id="loadingIndicator" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Processing your question...</p>
+            </div>
+
+            <div id="answerSection" class="answer-section" style="display: none;">
+                <h3>Answer</h3>
+                <div id="answerContent" class="answer-content"></div>
+            </div>
+
+            <div id="errorSection" class="error-section" style="display: none;">
+                <p id="errorMessage"></p>
+            </div>
+        </section>
+
+        <footer>
+            <p>Hosted on GitHub Pages | Powered by Google Cloud AI</p>
+        </footer>
+    </div>
+
+    <script src="sop.js"></script>
+</body>
+</html>
+

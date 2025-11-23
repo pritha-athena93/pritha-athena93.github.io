@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head><title>Test</title></head>
+<body>
+<h1>Career Agent - Local Test</h1>
+<p>Open browser console and test the API</p>
+<script>
+fetch('https://career-agent-api-tvpksobx5a-uc.a.run.app', {
+  method: 'POST',
+  headers: {'Content-Type': 'application/json'},
+  body: JSON.stringify({question: 'What is Kubernetes?'})
+})
+.then(r => r.json())
+.then(d => console.log('Success:', d))
+.catch(e => console.error('Error:', e));
+</script>
+</body>
+</html>
