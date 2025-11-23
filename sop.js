@@ -73,10 +73,14 @@ function addMessage(text, type, isError = false) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${type}-message`;
     
-    const avatar = type === 'user' ? '👤' : '🤖';
+    const avatar = type === 'user' ? '👤' : '🕷️';
     const avatarDiv = document.createElement('div');
     avatarDiv.className = 'message-avatar';
-    avatarDiv.textContent = avatar;
+    if (type === 'assistant') {
+        avatarDiv.innerHTML = '🕷️';
+    } else {
+        avatarDiv.textContent = avatar;
+    }
     
     const contentDiv = document.createElement('div');
     contentDiv.className = 'message-content';
