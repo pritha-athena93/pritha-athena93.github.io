@@ -13,6 +13,7 @@ from functools import wraps
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
 import google.generativeai as genai
+from PyPDF2 import PdfReader
 
 # Configure logging with security best practices
 logging.basicConfig(
@@ -73,33 +74,69 @@ except:
         # Last resort: use pro model
         model = genai.GenerativeModel('gemini-pro')
 
+# Load resume PDF content at startup
+RESUME_TEXT = None
+# Try multiple paths for resume
+RESUME_PATHS = [
+    os.path.join(os.path.dirname(__file__), 'resume.pdf'),  # In backend directory
+    os.path.join(os.path.dirname(__file__), '..', 'resume.pdf'),  # In parent directory
+]
+
+def load_resume():
+    """Load and extract text from resume PDF"""
+    global RESUME_TEXT
+    resume_path = None
+    
+    # Try to find resume in multiple locations
+    for path in RESUME_PATHS:
+        if os.path.exists(path):
+            resume_path = path
+            break
+    
+    if not resume_path:
+        logger.warning(f"Resume PDF not found in any of these locations: {RESUME_PATHS}")
+        RESUME_TEXT = "Resume not available."
+        return
+    
+    try:
+        logger.info(f"Loading resume from: {resume_path}")
+        reader = PdfReader(resume_path)
+        text_parts = []
+        for page in reader.pages:
+            text_parts.append(page.extract_text())
+        RESUME_TEXT = '\n\n'.join(text_parts)
+        logger.info(f"Resume loaded successfully ({len(RESUME_TEXT)} characters)")
+    except Exception as e:
+        logger.error(f"Error loading resume: {str(e)}")
+        RESUME_TEXT = "Error loading resume content."
+
+# Load resume at startup
+load_resume()
+
 # SOP Prompt Template
-SOP_PROMPT = """You are a professional recruiting assistant helping recruiters understand a candidate's background.
+SOP_PROMPT_TEMPLATE = """You are a professional recruiting assistant helping recruiters understand a candidate's background.
 
 Your role is to:
 1. Analyze questions about the candidate's experience, skills, projects, or background
-2. Provide detailed, recruiter-friendly answers based on the candidate's autobiography and career documents
-3. Highlight relevant experience, skills, and achievements
-4. Be specific and cite examples when possible
+2. Provide detailed, recruiter-friendly answers based ONLY on the candidate's resume provided below
+3. Highlight relevant experience, skills, and achievements from the resume
+4. Be specific and cite examples from the resume when possible
+5. If information is not in the resume, clearly state that the information is not available in the provided resume
 
 Guidelines:
 - Always be professional and positive
-- Focus on relevant experience and skills
-- If information isn't available, say so clearly
-- Structure answers clearly with specific examples
-- Compare candidate qualifications to job requirements when relevant
+- Focus on relevant experience and skills from the resume
+- Only use information that is explicitly stated in the resume
+- If information isn't available in the resume, say so clearly
+- Structure answers clearly with specific examples from the resume
+- Compare candidate qualifications to job requirements when relevant, using only resume information
 
-The candidate's autobiography and career documents contain comprehensive information about:
-- Career timeline and progression
-- Technical skills and expertise
-- Projects and achievements
-- Leadership experience
-- Key accomplishments
-- Professional growth and learning
+CANDIDATE'S RESUME:
+{resume_text}
 
-Answer the following question from a recruiter: {question}
+Answer the following question from a recruiter based ONLY on the resume information above: {question}
 
-Provide a comprehensive, well-structured answer that helps the recruiter understand why this candidate is a good fit."""
+Provide a comprehensive, well-structured answer that helps the recruiter understand why this candidate is a good fit. Only use information from the resume provided."""
 
 # Zero-Trust: Security headers middleware and CORS validation
 # CIS Benchmark: Implement security headers
@@ -249,8 +286,11 @@ def ask_question():
         client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
         logger.info(f"Request from {client_ip}: question length={len(question)}")
         
-        # Format prompt with question (already validated)
-        prompt = SOP_PROMPT.format(question=question)
+        # Format prompt with question and resume (already validated)
+        prompt = SOP_PROMPT_TEMPLATE.format(
+            resume_text=RESUME_TEXT or "Resume not available.",
+            question=question
+        )
         
         # Generate response using Gemini
         try:
