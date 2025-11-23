@@ -126,7 +126,8 @@ Guidelines:
 - Focus on relevant experience and skills from the resume
 - Only use information that is explicitly stated in the resume
 - If information isn't available in the resume, say so clearly
-- Structure answers clearly and with not more than 100 words per answer
+- **By default, keep answers concise (maximum {default_word_limit} words)**
+- **However, if the recruiter explicitly asks for more detail, elaboration, a longer response, or "tell me more", you may provide a more comprehensive answer (up to {max_word_limit} words)**
 - Compare candidate qualifications to job requirements when relevant, using only resume information
 
 CANDIDATE'S RESUME:
@@ -134,7 +135,7 @@ CANDIDATE'S RESUME:
 
 Answer the following question from a recruiter based ONLY on the resume information above: {question}
 
-Provide a comprehensive, well-structured answer that helps the recruiter understand why this candidate is a good fit. Only use information from the resume provided."""
+Analyze the question: If the recruiter is asking for more detail, elaboration, or a longer explanation, provide a comprehensive answer. Otherwise, keep it concise (max {default_word_limit} words). Only use information from the resume provided."""
 
 # Zero-Trust: Security headers middleware and CORS validation
 # CIS Benchmark: Implement security headers
@@ -286,10 +287,26 @@ def ask_question():
         client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
         logger.info(f"Request from {client_ip}: question length={len(question)}")
         
+        # Determine word limit based on question
+        # Check if user is asking for more detail/elaboration
+        question_lower = question.lower()
+        elaboration_keywords = [
+            'more detail', 'more information', 'elaborate', 'elaboration',
+            'tell me more', 'explain more', 'longer', 'comprehensive',
+            'detailed', 'in depth', 'expand', 'further', 'additional'
+        ]
+        wants_elaboration = any(keyword in question_lower for keyword in elaboration_keywords)
+        
+        # Word limits
+        DEFAULT_WORD_LIMIT = 100
+        MAX_WORD_LIMIT = 500  # Maximum for elaborate responses
+        
         # Format prompt with question and resume (already validated)
         prompt = SOP_PROMPT_TEMPLATE.format(
             resume_text=RESUME_TEXT or "Resume not available.",
-            question=question
+            question=question,
+            default_word_limit=DEFAULT_WORD_LIMIT,
+            max_word_limit=MAX_WORD_LIMIT
         )
         
         # Generate response using Gemini
