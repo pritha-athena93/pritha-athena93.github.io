@@ -13,8 +13,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY main.py .
 
-# Copy resume PDF
-COPY resume.pdf resume.pdf
+# Copy resume text file (will be in backend directory)
+COPY resume.txt resume.txt
 
 # Create non-root user for security
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app

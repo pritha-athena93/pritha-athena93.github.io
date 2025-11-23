@@ -13,7 +13,6 @@ from functools import wraps
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
 import google.generativeai as genai
-from PyPDF2 import PdfReader
 
 # Configure logging with security best practices
 logging.basicConfig(
@@ -74,37 +73,36 @@ except:
         # Last resort: use pro model
         model = genai.GenerativeModel('gemini-pro')
 
-# Load resume PDF content at startup
+# Load resume text content at startup
 RESUME_TEXT = None
-# Try multiple paths for resume
+# Try multiple paths for resume (supports .txt, .md text files)
 RESUME_PATHS = [
-    os.path.join(os.path.dirname(__file__), 'resume.pdf'),  # In backend directory
-    os.path.join(os.path.dirname(__file__), '..', 'resume.pdf'),  # In parent directory
+    os.path.join(os.path.dirname(__file__), 'resume.txt'),  # In backend directory
+    os.path.join(os.path.dirname(__file__), 'resume.md'),  # In backend directory
+    os.path.join(os.path.dirname(__file__), '..', 'resume.txt'),  # In parent directory
+    os.path.join(os.path.dirname(__file__), '..', 'resume.md'),  # In parent directory
 ]
 
 def load_resume():
-    """Load and extract text from resume PDF"""
+    """Load resume text from file (supports .txt, .md)"""
     global RESUME_TEXT
     resume_path = None
     
-    # Try to find resume in multiple locations
+    # Try to find resume in multiple locations and formats
     for path in RESUME_PATHS:
         if os.path.exists(path):
             resume_path = path
             break
     
     if not resume_path:
-        logger.warning(f"Resume PDF not found in any of these locations: {RESUME_PATHS}")
+        logger.warning(f"Resume file not found in any of these locations: {RESUME_PATHS}")
         RESUME_TEXT = "Resume not available."
         return
     
     try:
         logger.info(f"Loading resume from: {resume_path}")
-        reader = PdfReader(resume_path)
-        text_parts = []
-        for page in reader.pages:
-            text_parts.append(page.extract_text())
-        RESUME_TEXT = '\n\n'.join(text_parts)
+        with open(resume_path, 'r', encoding='utf-8') as f:
+            RESUME_TEXT = f.read()
         logger.info(f"Resume loaded successfully ({len(RESUME_TEXT)} characters)")
     except Exception as e:
         logger.error(f"Error loading resume: {str(e)}")
