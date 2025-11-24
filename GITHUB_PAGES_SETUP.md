@@ -60,3 +60,4 @@ git push -u origin main
 - Verify API URL in `sop.js` is correct
 - Test API directly: `curl -X POST https://career-agent-api-tvpksobx5a-uc.a.run.app -H "Content-Type: application/json" -d '{"question":"test"}'`
 
+

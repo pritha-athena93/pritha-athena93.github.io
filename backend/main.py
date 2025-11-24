@@ -50,9 +50,10 @@ RATE_LIMIT_WINDOW = 3600  # Per hour (3600 seconds = 1 hour)
 
 # Zero-Trust: Input validation patterns
 # CIS Benchmark: Validate and sanitize all inputs
-MAX_QUESTION_LENGTH = 2000
+MAX_QUESTION_LENGTH = 10000
 MIN_QUESTION_LENGTH = 1
-QUESTION_PATTERN = re.compile(r'^[a-zA-Z0-9\s\?\.\,\!\-\:\;\(\)\[\]\{\}\'\"\/\@\#\$\%\^\&\*\+\=\_\|\\\~\`\<\>]+$')
+# Allow newlines, tabs, and common punctuation - more permissive for job descriptions
+QUESTION_PATTERN = re.compile(r'^[\s\S]+$')  # Allow all characters including newlines
 
 # Configuration from environment (Zero-Trust: Secrets from Secret Manager)
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
@@ -225,7 +226,20 @@ def validate_question(question):
         return False, "Question contains invalid characters"
     
     # Check for SQL injection patterns (defense in depth)
-    sql_patterns = [';', '--', '/*', '*/', 'xp_', 'sp_', 'exec', 'union', 'select']
+    # Only flag actual SQL injection patterns, not common words
+    sql_patterns = [
+        ';--',  # SQL comment injection
+        '/*',   # SQL block comment start
+        '*/',   # SQL block comment end
+        'xp_',  # SQL Server extended procedure
+        'sp_',  # SQL Server stored procedure
+        'exec(', # SQL execution
+        'union select', # SQL union injection
+        'drop table', # SQL drop table
+        'delete from', # SQL delete
+        'insert into', # SQL insert
+        'update set', # SQL update
+    ]
     question_lower = question.lower()
     for pattern in sql_patterns:
         if pattern in question_lower:
